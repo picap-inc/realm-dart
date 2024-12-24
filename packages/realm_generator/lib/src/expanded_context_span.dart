@@ -3,10 +3,12 @@
 
 import 'package:source_span/source_span.dart';
 
-class ExpandedContextSpan with SourceSpanMixin implements FileSpan {
+class ExpandedContextSpan extends SourceSpanMixin implements FileSpan {
   final FileSpan _span, _contextSpan;
 
-  ExpandedContextSpan(this._span, Iterable<FileSpan> contextSpans) : _contextSpan = contextSpans.fold<FileSpan>(_span, (acc, c) => acc.expand(c));
+  ExpandedContextSpan(this._span, Iterable<FileSpan> contextSpans)
+      : _contextSpan =
+            contextSpans.fold<FileSpan>(_span, (acc, c) => acc.expand(c));
 
   @override
   String get context => _contextSpan.context;

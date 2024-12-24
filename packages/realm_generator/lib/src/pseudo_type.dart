@@ -6,6 +6,7 @@
 import 'dart:mirrors';
 
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type_visitor.dart';
 import 'package:analyzer/src/dart/element/display_string_builder.dart';
@@ -26,7 +27,9 @@ class PseudoType extends TypeImpl {
   R accept<R>(TypeVisitor<R> visitor) => _never;
 
   @override
-  R acceptWithArgument<R, A>(TypeVisitorWithArgument<R, A> visitor, A argument) => _never;
+  R acceptWithArgument<R, A>(
+          TypeVisitorWithArgument<R, A> visitor, A argument) =>
+      _never;
 
   @override
   void appendTo(ElementDisplayStringBuilder builder) {
@@ -39,11 +42,14 @@ class PseudoType extends TypeImpl {
 
     // Private Symbols are suffixed with a secret '@<some int>'
     // .. hence this ugly trick ヽ(ಠ_ಠ)ノ
-    final writeSymbol = im.type.instanceMembers.keys.firstWhere((m) => '$m'.contains('"_write"'));
+    final writeSymbol = im.type.instanceMembers.keys
+        .firstWhere((m) => '$m'.contains('"_write"'));
     im.invoke(writeSymbol, <dynamic>[_name]); // #_write won't work
 
-    final writeNullability = im.type.instanceMembers.keys.firstWhere((m) => '$m'.contains('"_writeNullability"'));
-    im.invoke(writeNullability, <dynamic>[nullabilitySuffix]); // #_writeNullability won't work
+    final writeNullability = im.type.instanceMembers.keys
+        .firstWhere((m) => '$m'.contains('"_writeNullability"'));
+    im.invoke(writeNullability,
+        <dynamic>[nullabilitySuffix]); // #_writeNullability won't work
   }
 
   @override
@@ -59,4 +65,7 @@ class PseudoType extends TypeImpl {
 
   @override
   Element? get element => null;
+
+  @override
+  Element2? get element3 => null;
 }
