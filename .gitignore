@@ -23,3 +23,5 @@ doc/api/
 
 # custom lint
 custom_lint.log
+
+.DS_STORE
