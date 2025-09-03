@@ -6,6 +6,7 @@ import 'dart:math';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:realm_generator/src/annotation_value.dart';
 import 'package:realm_generator/src/expanded_context_span.dart';
 import 'package:source_gen/source_gen.dart';
@@ -18,8 +19,8 @@ import 'session.dart';
 import 'type_checkers.dart';
 import 'utils.dart';
 
-ElementDeclarationResult? getDeclarationFromElement(Element element) {
-  return session.resolvedLibrary.getElementDeclaration(element);
+FragmentDeclarationResult? getDeclarationFromElement(Element2 element) {
+  return session.resolvedLibrary.getFragmentDeclaration(element.firstFragment);
 }
 
 extension on FileSpan {
@@ -42,7 +43,7 @@ extension AstNodeEx on AstNode {
   }
 }
 
-extension ElementEx on Element {
+extension ElementEx on Element2 {
   FileSpan? get _shortSpan {
     try {
       return spanForElement(this) as FileSpan;
@@ -52,8 +53,8 @@ extension ElementEx on Element {
 
   AnnotatedNode get declarationAstNode {
     final self = this;
-    if (self is ClassElement) return self.declarationAstNode;
-    if (self is FieldElement) return self.declarationAstNode;
+    if (self is ClassElement2) return self.declarationAstNode;
+    if (self is FieldElement2) return self.declarationAstNode;
     throw UnsupportedError('$runtimeType not supported');
   }
 
@@ -78,10 +79,14 @@ extension ElementEx on Element {
 
       throw RealmInvalidGenerationSourceError('Repeated annotation',
           element: this,
-          primarySpan: ExpandedContextSpan(second.annotation.span(file), [elementSpan]),
+          primarySpan:
+              ExpandedContextSpan(second.annotation.span(file), [elementSpan]),
           primaryLabel: 'duplicated annotation',
           secondarySpans: {
-            ...{for (final a in annotations..removeAt(1)) a.annotation.span(file): ''}
+            ...{
+              for (final a in annotations..removeAt(1))
+                a.annotation.span(file): ''
+            }
           },
           todo: 'Remove all duplicated ${second.annotation} annotations.');
     }
@@ -98,16 +103,21 @@ extension ElementEx on Element {
     try {
       elementSpan = _shortSpan!;
       final self = this;
-      if (self is FieldElement) {
+      if (self is FieldElement2) {
         final node = self.declarationAstNode;
         if (node.metadata.isNotEmpty) {
-          return ExpandedContextSpan(elementSpan, [node.span(elementSpan.file)]);
+          return ExpandedContextSpan(
+              elementSpan, [node.span(elementSpan.file)]);
         }
-      } else if (self is ClassElement) {
+      } else if (self is ClassElement2) {
         final node = self.declarationAstNode;
         if (node.metadata.isNotEmpty) {
           // don't include full class
-          return ExpandedContextSpan(elementSpan, [node.span(elementSpan.file).clampEnd(elementSpan.extentToEndOfLine())]);
+          return ExpandedContextSpan(elementSpan, [
+            node
+                .span(elementSpan.file)
+                .clampEnd(elementSpan.extentToEndOfLine())
+          ]);
         }
       }
     } catch (_) {}

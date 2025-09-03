@@ -1,16 +1,16 @@
 // Copyright 2021 MongoDB, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:realm_common/realm_common.dart';
+import 'package:realm_generator/src/element.dart';
 
 import 'dart_type_ex.dart';
-import 'element.dart';
 import 'field_element_ex.dart';
 
 class RealmFieldInfo {
-  final FieldElement fieldElement;
+  final FieldElement2 fieldElement;
   final String? mapTo;
   final bool isPrimaryKey;
   final RealmIndexType? indexType;
@@ -31,7 +31,8 @@ class RealmFieldInfo {
   bool get isFinal => fieldElement.isFinal;
   bool get isLate => fieldElement.isLate;
   bool get hasDefaultValue => fieldElement.hasInitializer;
-  bool get optional => type.basicType.isNullable || realmType == RealmPropertyType.mixed;
+  bool get optional =>
+      type.basicType.isNullable || realmType == RealmPropertyType.mixed;
   bool get isRequired => !(hasDefaultValue || optional || isRealmCollection);
   bool get isRealmBacklink => realmType == RealmPropertyType.linkingObjects;
   bool get isMixed => realmType == RealmPropertyType.mixed;
@@ -42,15 +43,18 @@ class RealmFieldInfo {
   bool get isDartCoreSet => type.isDartCoreSet;
   bool get isDartCoreMap => type.isDartCoreMap;
 
-  String get name => fieldElement.name;
+  String get name => fieldElement.name3 ?? '';
   String get realmName => mapTo ?? name;
 
   String get basicMappedTypeName => type.basicMappedName;
 
-  String get basicNonNullableMappedTypeName => type.basicType.asNonNullable.mappedName;
+  String get basicNonNullableMappedTypeName =>
+      type.basicType.asNonNullable.mappedName;
 
   String get basicRealmTypeName =>
-      fieldElement.modelType.basicType.asNonNullable.element?.remappedRealmName ?? fieldElement.modelType.basicType.asNonNullable.basicMappedName;
+      fieldElement
+          .modelType.basicType.asNonNullable.element3?.remappedRealmName ??
+      fieldElement.modelType.basicType.asNonNullable.basicMappedName;
 
   String get modelTypeName => fieldElement.modelTypeName;
 
@@ -73,7 +77,9 @@ class RealmFieldInfo {
   RealmCollectionType get realmCollectionType => type.realmCollectionType;
 
   Iterable<String> toCode() sync* {
-    final getTypeName = type.isRealmCollection ? basicMappedTypeName : basicNonNullableMappedTypeName;
+    final getTypeName = type.isRealmCollection
+        ? basicMappedTypeName
+        : basicNonNullableMappedTypeName;
     yield '@override';
     if (isRealmBacklink) {
       yield "$mappedTypeName get $name {";

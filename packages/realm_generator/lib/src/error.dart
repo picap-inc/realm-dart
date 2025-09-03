@@ -1,11 +1,11 @@
 // Copyright 2021 MongoDB, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
+import 'package:realm_generator/src/element.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:source_span/source_span.dart';
 
-import 'element.dart';
 import 'format_spans.dart';
 import 'session.dart';
 import 'utils.dart';
@@ -19,7 +19,7 @@ class RealmInvalidGenerationSourceError extends InvalidGenerationSourceError {
   RealmInvalidGenerationSourceError(
     super.message, {
     required super.todo,
-    required Element element,
+    required Element2 element,
     FileSpan? primarySpan,
     bool? color,
     this.primaryLabel,
@@ -28,10 +28,11 @@ class RealmInvalidGenerationSourceError extends InvalidGenerationSourceError {
         secondarySpans = {...secondarySpans},
         color = color ?? session.color,
         super(element: element) {
-    if (element is FieldElement || element is ConstructorElement) {
-      final classElement = element.enclosingElement!;
+    if (element is FieldElement2 || element is ConstructorElement2) {
+      final classElement = element.firstFragment.enclosingFragment!.element;
       this.secondarySpans.addAll({
-        classElement.span!: "in realm model for '${session.mapping.entries.where((e) => e.value == classElement).singleOrNull?.key}'",
+        classElement.span!:
+            "in realm model for '${session.mapping.entries.where((e) => e.value == classElement).singleOrNull?.key}'",
       });
     }
   }

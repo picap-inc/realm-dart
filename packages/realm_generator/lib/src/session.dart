@@ -4,7 +4,7 @@
 import 'dart:async';
 
 import 'package:analyzer/dart/analysis/results.dart';
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type_provider.dart';
 import 'package:analyzer/dart/element/type_system.dart';
 
@@ -38,12 +38,13 @@ class Session {
   final Pattern prefix;
   final String suffix;
   final bool color;
-  final mapping = <String, ClassElement>{}; // shared
+  final mapping = <String, ClassElement2>{}; // shared
 
-  Session(this.resolvedLibrary, {String? prefix, String? suffix, this.color = false})
+  Session(this.resolvedLibrary,
+      {String? prefix, String? suffix, this.color = false})
       : prefix = prefix ?? RegExp(r'[_$]'), // defaults to _ or $
         suffix = suffix ?? '';
 
   TypeProvider get typeProvider => resolvedLibrary.typeProvider;
-  TypeSystem get typeSystem => resolvedLibrary.element.typeSystem;
+  TypeSystem get typeSystem => resolvedLibrary.element2.typeSystem;
 }
