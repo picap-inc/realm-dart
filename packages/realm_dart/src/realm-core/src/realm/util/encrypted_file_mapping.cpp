@@ -52,6 +52,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef REALM_ANDROID_16KB_PAGES
+#include <android/log.h>
+#endif
+
 namespace realm::util {
 // When Realm's file encryption was originally designed, we had the constraint
 // that all encryption and decryption had to happen in aligned system page size
@@ -158,7 +162,16 @@ inline uint16_t get_encryption_page_size() {
         size_t sys_page_size = util::page_size();
         // Use system page size if it's >= 4KB and a power of 2, otherwise use 4KB
         if (sys_page_size >= 4096 && (sys_page_size & (sys_page_size - 1)) == 0) {
-            return static_cast<uint16_t>(std::min(sys_page_size, size_t(65536))); // Cap at 64KB
+            auto result = static_cast<uint16_t>(std::min(sys_page_size, size_t(65536))); // Cap at 64KB
+#ifdef REALM_ANDROID_16KB_PAGES
+            // Debug logging for Android 16KB page verification
+            if (sys_page_size >= 16384) {
+                // This will show in Android logcat as "Realm: Using 16KB pages"
+                __android_log_print(6, "Realm", "16KB page support active: system=%zu, using=%u", 
+                                   sys_page_size, result);
+            }
+#endif
+            return result;
         }
         return uint16_t(4096);
     }();
