@@ -5,6 +5,16 @@ if(CMAKE_SYSTEM_NAME STREQUAL Android)
     set(REALM_ANDROID ON)
     set(CMAKE_ANDROID_STL_TYPE c++_static)
     set(ANDROID_ALLOW_UNDEFINED_SYMBOLS ON)
+    
+    # Support for Android 15+ 16KB memory pages
+    message("Adding Android 16KB page support")
+    add_compile_definitions(REALM_ANDROID_16KB_PAGES=1)
+    
+    # Ensure we target at least Android API 23 for better 16KB page support
+    if(NOT DEFINED ANDROID_NATIVE_API_LEVEL OR ANDROID_NATIVE_API_LEVEL LESS 23)
+        set(ANDROID_NATIVE_API_LEVEL 23)
+        message("Setting ANDROID_NATIVE_API_LEVEL to ${ANDROID_NATIVE_API_LEVEL} for 16KB page support")
+    endif()
 endif()
 
 project(realm-dart)

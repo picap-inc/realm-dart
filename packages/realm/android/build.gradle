@@ -28,12 +28,13 @@ android {
         namespace 'io.realm'
     }
 
-    compileSdkVersion 31
+    compileSdkVersion 36
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 23  // Updated from 16 for better 16KB page support
 		ndk {
-            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            // For 16KB pages compatibility, prioritize ARM64
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64', 'x86'
         }
     }
 	
