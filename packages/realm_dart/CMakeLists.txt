@@ -5,11 +5,18 @@ if(CMAKE_SYSTEM_NAME STREQUAL Android)
     set(REALM_ANDROID ON)
     set(CMAKE_ANDROID_STL_TYPE c++_static)
     set(ANDROID_ALLOW_UNDEFINED_SYMBOLS ON)
-    
+
     # Support for Android 15+ 16KB memory pages
     message("Adding Android 16KB page support")
     add_compile_definitions(REALM_ANDROID_16KB_PAGES=1)
-    
+
+    # Set compile flags for 16KB page alignment
+    if(CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a" OR CMAKE_ANDROID_ARCH_ABI STREQUAL "x86_64")
+        add_compile_options(-D_FILE_OFFSET_BITS=64)
+        add_link_options(-Wl,-z,max-page-size=16384)
+        message("Configuring for 16KB page size on ${CMAKE_ANDROID_ARCH_ABI}")
+    endif()
+
     # Ensure we target at least Android API 23 for better 16KB page support
     if(NOT DEFINED ANDROID_NATIVE_API_LEVEL OR ANDROID_NATIVE_API_LEVEL LESS 23)
         set(ANDROID_NATIVE_API_LEVEL 23)

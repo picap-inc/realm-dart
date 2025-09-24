@@ -25,3 +25,6 @@ doc/api/
 custom_lint.log
 
 .DS_STORE
+
+# FVM Version Cache
+.fvm/

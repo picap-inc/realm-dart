@@ -62,6 +62,13 @@ if(ANDROID)
     # Core requires these options for the final *.so file. See more realm-core/CMakeLists.txt
     target_link_options(realm_dart PRIVATE LINKER:-gc-sections)
 
+    # Android 15+ 16KB page support
+    # Ensure proper alignment for ARM64 architecture
+    if(CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a" OR CMAKE_ANDROID_ARCH_ABI STREQUAL "x86_64")
+        target_link_options(realm_dart PRIVATE LINKER:-z,max-page-size=16384)
+        message("Adding 16KB page alignment for ${CMAKE_ANDROID_ARCH_ABI}")
+    endif()
+
     # Add a custom target to strip the binary
     add_custom_target(strip ${CMAKE_STRIP} $<TARGET_FILE:realm_dart>)
 
