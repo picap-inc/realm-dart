@@ -45,7 +45,8 @@ android {
             java {
                 srcDirs = ['src/main/java', "$buildDir/realm-generated"]
             }
-            jniLibs.srcDirs += ["src/main/cpp/lib/"]
+            // Use jniLibs directory for native libraries with 16KB page support
+            jniLibs.srcDirs = ['src/main/jniLibs']
         }
     }
 	
@@ -53,12 +54,39 @@ android {
         disable 'InvalidPackage'
     }
 
-    //We don't need native build for now. This will enable it.
-    //externalNativeBuild {
-    //    cmake {
-    //        path "src/main/cpp/CMakeLists.txt"
-    //    }
-    //}
+    // Enable native build with CMake for 16KB page support
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+
+    defaultConfig {
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++20"
+                arguments "-DANDROID_STL=c++_static",
+                         "-DANDROID_PLATFORM=android-23",
+                         "-DREALM_ANDROID_16KB=ON"
+
+                // Add 16KB page size linker flags for 64-bit architectures
+                if (gradle.startParameter.projectProperties.containsKey("target-platform")) {
+                    def platform = gradle.startParameter.projectProperties.get("target-platform")
+                    if (platform == "android-arm64" || platform == "android-x64") {
+                        cFlags "-D_FILE_OFFSET_BITS=64"
+                        arguments "-DCMAKE_EXE_LINKER_FLAGS=-Wl,-z,max-page-size=16384",
+                                 "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384"
+                    }
+                } else {
+                    // Default: add flags for all 64-bit architectures
+                    cFlags "-D_FILE_OFFSET_BITS=64"
+                    arguments "-DCMAKE_EXE_LINKER_FLAGS=-Wl,-z,max-page-size=16384",
+                             "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384"
+                }
+            }
+        }
+    }
 }
 
 def getPaths() {
@@ -144,4 +172,6 @@ tasks.register("generateRealmConfig", Copy) {
     filter { line -> line.replaceAll('realm_bundle_id', "${bundleId}") }
 }
 
-preBuild.dependsOn runMetrics, downloadRealmBinaries, generateRealmConfig
+// Comentado temporalmente para usar las librerías compiladas localmente con soporte 16KB
+// preBuild.dependsOn runMetrics, downloadRealmBinaries, generateRealmConfig
+preBuild.dependsOn runMetrics, generateRealmConfig
