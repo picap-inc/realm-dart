@@ -54,39 +54,12 @@ android {
         disable 'InvalidPackage'
     }
 
-    // Enable native build with CMake for 16KB page support
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-            version "3.22.1"
-        }
-    }
-
-    defaultConfig {
-        externalNativeBuild {
-            cmake {
-                cppFlags "-std=c++20"
-                arguments "-DANDROID_STL=c++_static",
-                         "-DANDROID_PLATFORM=android-23",
-                         "-DREALM_ANDROID_16KB=ON"
-
-                // Add 16KB page size linker flags for 64-bit architectures
-                if (gradle.startParameter.projectProperties.containsKey("target-platform")) {
-                    def platform = gradle.startParameter.projectProperties.get("target-platform")
-                    if (platform == "android-arm64" || platform == "android-x64") {
-                        cFlags "-D_FILE_OFFSET_BITS=64"
-                        arguments "-DCMAKE_EXE_LINKER_FLAGS=-Wl,-z,max-page-size=16384",
-                                 "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384"
-                    }
-                } else {
-                    // Default: add flags for all 64-bit architectures
-                    cFlags "-D_FILE_OFFSET_BITS=64"
-                    arguments "-DCMAKE_EXE_LINKER_FLAGS=-Wl,-z,max-page-size=16384",
-                             "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384"
-                }
-            }
-        }
-    }
+    // We don't compile natively here - libraries are pre-built with 16KB support
+    // externalNativeBuild {
+    //     cmake {
+    //         path "src/main/cpp/CMakeLists.txt"
+    //     }
+    // }
 }
 
 def getPaths() {
@@ -172,6 +145,32 @@ tasks.register("generateRealmConfig", Copy) {
     filter { line -> line.replaceAll('realm_bundle_id', "${bundleId}") }
 }
 
-// Comentado temporalmente para usar las librerías compiladas localmente con soporte 16KB
-// preBuild.dependsOn runMetrics, downloadRealmBinaries, generateRealmConfig
-preBuild.dependsOn runMetrics, generateRealmConfig
+// Task to replace libraries with 16KB-aligned versions after download
+tasks.register("replace16KBLibraries") {
+    doLast {
+        def libDir = file("src/main/jniLibs")
+        def lib16KBDir = file("src/main/jniLibs-16kb")
+
+        if (lib16KBDir.exists()) {
+            println "Replacing libraries with 16KB-aligned versions..."
+
+            // Copy 16KB-aligned libraries for arm64-v8a and x86_64
+            ["arm64-v8a", "x86_64"].each { arch ->
+                def srcFile = file("${lib16KBDir}/${arch}/librealm_dart.so")
+                def destFile = file("${libDir}/${arch}/librealm_dart.so")
+
+                if (srcFile.exists()) {
+                    destFile.parentFile.mkdirs()
+                    destFile.bytes = srcFile.bytes
+                    println "Replaced ${arch}/librealm_dart.so with 16KB-aligned version"
+                }
+            }
+        } else {
+            println "16KB-aligned libraries not found. Using default libraries."
+        }
+    }
+}
+
+preBuild.dependsOn runMetrics, downloadRealmBinaries, generateRealmConfig
+// Replace with 16KB versions after download if available
+downloadRealmBinaries.finalizedBy replace16KBLibraries
